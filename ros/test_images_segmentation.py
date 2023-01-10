@@ -32,6 +32,8 @@ from cv_bridge import CvBridge, CvBridgeError
 from fcn.config import cfg, cfg_from_file, get_output_dir
 from fcn.test_dataset import test_sample
 from utils.mask import visualize_segmentation
+from utils import get_center_point
+
 lock = threading.Lock()
 
 
@@ -192,7 +194,8 @@ class ImageListener:
             rgb_msg_refined.header.stamp = rgb_frame_stamp
             rgb_msg_refined.header.frame_id = rgb_frame_id
             self.image_refined_pub.publish(rgb_msg_refined)
-
+        np.save("label_refined_data.npy", label_refined)
+        np.save("depth_data.npy", depth_blob)
 
 def parse_args():
     """
@@ -281,5 +284,9 @@ if __name__ == '__main__':
 
     # image listener
     listener = ImageListener(network, network_crop)
+    cnt=0
     while not rospy.is_shutdown():
-       listener.run_network()
+        listener.run_network()
+        cnt+=1 
+        if cnt == 10000:
+            break 
