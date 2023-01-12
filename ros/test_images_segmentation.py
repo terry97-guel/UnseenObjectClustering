@@ -32,9 +32,27 @@ from cv_bridge import CvBridge, CvBridgeError
 from fcn.config import cfg, cfg_from_file, get_output_dir
 from fcn.test_dataset import test_sample
 from utils.mask import visualize_segmentation
-from utils import get_center_point
-
 lock = threading.Lock()
+
+def get_center_point(depth_pixel, label_pixel):
+    total_cluster_lst = []; total_cluster_center_point=[]
+    clustering_num=len(np.unique(label_pixel))
+    for idx in range(clustering_num):
+        if idx==0: pass # Background, Except clustered objects
+        else: 
+            cluster_xlst, cluster_ylst = np.where(label_pixel==idx)
+            total_cluster_lst.append(depth_pixel[:,cluster_xlst, cluster_ylst])
+    for cluster in total_cluster_lst:
+        x_total = 0; y_total = 0; z_total = []
+        for i in range(len(cluster)):
+            x_total += cluster[0,i]
+            y_total += cluster[1,i]
+            z_total.append(cluster[2,i])
+        x = x_total / len(cluster)
+        y = y_total / len(cluster)
+        z = (max(z_total)+(min(z_total)))/2 
+        total_cluster_center_point.append([z,x,y])
+    return total_cluster_center_point
 
 
 def compute_xyz(depth_img, fx, fy, px, py, height, width):
@@ -172,7 +190,8 @@ class ImageListener:
 
         num_object = len(np.unique(label)) - 1
         print('%d objects' % (num_object))
-
+        np.save("label_data.npy", out_label[0].cpu().numpy())
+        np.save("depth_data.npy", depth_blob)
         if out_label_refined is not None:
             label_refined = out_label_refined[0].cpu().numpy()
             label_msg_refined = self.cv_bridge.cv2_to_imgmsg(label_refined.astype(np.uint8))
@@ -194,8 +213,7 @@ class ImageListener:
             rgb_msg_refined.header.stamp = rgb_frame_stamp
             rgb_msg_refined.header.frame_id = rgb_frame_id
             self.image_refined_pub.publish(rgb_msg_refined)
-        np.save("label_refined_data.npy", label_refined)
-        np.save("depth_data.npy", depth_blob)
+        return num_object
 
 def parse_args():
     """
@@ -286,7 +304,9 @@ if __name__ == '__main__':
     listener = ImageListener(network, network_crop)
     cnt=0
     while not rospy.is_shutdown():
-        listener.run_network()
-        cnt+=1 
-        if cnt == 10000:
-            break 
+        num_object = listener.run_network()
+        print("num_object", num_object)
+        if num_object==7:
+            cnt+=1
+        if cnt==1:
+            break
