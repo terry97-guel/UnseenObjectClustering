@@ -150,9 +150,8 @@ class ImageListener:
             self.rgb_frame_id = rgb.header.frame_id
             self.rgb_frame_stamp = rgb.header.stamp
 
-
+    @torch.no_grad()
     def run_network(self):
-
         with lock:
             if listener.im is None:
               return
@@ -306,7 +305,7 @@ if __name__ == '__main__':
     while not rospy.is_shutdown():
         num_object = listener.run_network()
         print("num_object", num_object)
-        if num_object==7:
+        if num_object==6:
             cnt+=1
-        if cnt==1:
+        if cnt==2:
             break
