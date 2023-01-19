@@ -305,7 +305,7 @@ if __name__ == '__main__':
     while not rospy.is_shutdown():
         num_object = listener.run_network()
         print("num_object", num_object)
-        if num_object==6:
+        if num_object==7: #Place: 5 ,NP: 7 (Including Target object)
             cnt+=1
-        if cnt==2:
+        if cnt==1:
             break
