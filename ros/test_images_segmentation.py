@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Copyright (c) 2020 NVIDIA Corporation. All rights reserved.
 # This work is licensed under the NVIDIA Source Code License - Non-commercial. Full
@@ -189,8 +189,9 @@ class ImageListener:
 
         num_object = len(np.unique(label)) - 1
         print('%d objects' % (num_object))
-        np.save("label_data.npy", out_label[0].cpu().numpy())
-        np.save("depth_data.npy", depth_blob)
+        if num_object > 0:
+            np.save("label_data.npy", out_label[0].cpu().numpy())
+            np.save("depth_data.npy", depth_blob)
         if out_label_refined is not None:
             label_refined = out_label_refined[0].cpu().numpy()
             label_msg_refined = self.cv_bridge.cv2_to_imgmsg(label_refined.astype(np.uint8))
@@ -305,7 +306,9 @@ if __name__ == '__main__':
     while not rospy.is_shutdown():
         num_object = listener.run_network()
         print("num_object", num_object)
-        if num_object==7: #Place: 5 ,NP: 7 (Including Target object)
-            cnt+=1
-        if cnt==1:
+        if num_object != 0 and num_object is not None:
             break
+        # if num_object==7: #Place: 5 ,NP: 7 (Including Target object)
+        #     cnt+=1
+        # if cnt==1:
+        #     break
